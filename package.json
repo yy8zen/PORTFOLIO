@@ -1,0 +1,24 @@
+{
+  "name": "googlemapexporter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node index.js",
+    "setup": "npm install && npx playwright install chromium",
+    "postinstall": "npx playwright install chromium",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^14.0.2",
+    "cors": "^2.8.5",
+    "csv-writer": "^1.6.0",
+    "express": "^5.2.1",
+    "playwright": "^1.57.0",
+    "socket.io": "^4.8.3"
+  }
+}

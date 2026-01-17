@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Map Exporter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Google Map Exporter</h1>
+        </header>
+
+        <!-- 検索フォーム（上部・コンパクト） -->
+        <div class="card search-card">
+            <form id="scrapeForm">
+                <!-- 検索キーワード行 -->
+                <div class="search-row">
+                    <div class="keyword-group">
+                        <label for="keyword">検索キーワード <span class="required">*</span></label>
+                        <input type="text" id="keyword" name="keyword" placeholder="例: 東京都 渋谷区 ラーメン" required>
+                    </div>
+                </div>
+
+                <!-- 絞り込み条件行 -->
+                <div class="filter-row">
+                    <span class="filter-label">絞り込み:</span>
+                    <div class="form-group">
+                        <label for="rating">評価</label>
+                        <input type="number" id="rating" name="rating" min="0" max="5" step="0.1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewCount">レビュー数</label>
+                        <input type="number" id="reviewCount" name="reviewCount" min="0" step="1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="budgetMin">予算下限</label>
+                        <input type="number" id="budgetMin" name="budgetMin" min="0" step="1000" placeholder="円">
+                    </div>
+                    <div class="form-group">
+                        <label for="budgetMax">予算上限</label>
+                        <input type="number" id="budgetMax" name="budgetMax" min="0" step="1000" placeholder="円">
+                    </div>
+                    <div class="form-group">
+                        <label for="addressFilter">住所</label>
+                        <input type="text" id="addressFilter" name="addressFilter" placeholder="含む">
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryFilter">カテゴリ</label>
+                        <input type="text" id="categoryFilter" name="categoryFilter" list="categoryList" placeholder="含む">
+                        <datalist id="categoryList">
+                            <option value="レストラン"><option value="カフェ"><option value="居酒屋">
+                            <option value="ラーメン"><option value="寿司"><option value="焼肉">
+                            <option value="イタリアン"><option value="中華"><option value="和食">
+                        </datalist>
+                    </div>
+                    <div class="form-group day-group">
+                        <label>営業曜日</label>
+                        <div class="day-checkboxes">
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="月曜日">月</label>
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="火曜日">火</label>
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="水曜日">水</label>
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="木曜日">木</label>
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="金曜日">金</label>
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="土曜日">土</label>
+                            <label class="day-cb"><input type="checkbox" name="dayFilter" value="日曜日">日</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hoursFilter">営業時間</label>
+                        <input type="time" id="hoursFilter" name="hoursFilter">
+                    </div>
+                    <div class="search-actions">
+                        <button type="submit" id="startButton" class="btn btn-primary">検索開始</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 結果エリア（大きく表示） -->
+        <div class="result-area">
+            <!-- 進捗表示 -->
+            <div id="progressSection" class="progress-section" style="display: none;">
+                <div class="progress-inline">
+                    <span id="progressStage">準備中...</span>
+                    <div class="progress-bar-inline">
+                        <div id="progressFill" class="progress-fill-inline"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 結果セクション -->
+            <div id="resultSection" style="display: none;">
+                <div class="result-header">
+                    <p id="resultMessage"></p>
+                    <div class="result-actions">
+                        <button id="downloadButton" class="btn btn-success btn-sm" style="display: none;">CSVダウンロード</button>
+                        <button id="newSearchButton" class="btn btn-secondary btn-sm">新しい検索</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 結果テーブル -->
+            <div id="resultTableContainer" class="result-table-container" style="display: none;">
+                <div class="table-wrapper">
+                    <table id="resultTable" class="result-table">
+                        <thead>
+                            <tr>
+                                <th>店名</th>
+                                <th>カテゴリ</th>
+                                <th>評価</th>
+                                <th>件数</th>
+                                <th>予算</th>
+                                <th>住所</th>
+                                <th>営業時間</th>
+                                <th>口コミ</th>
+                                <th>MAP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 初期メッセージ -->
+            <div id="initialMessage" class="initial-message">
+                <p>検索条件を入力して「検索開始」をクリック</p>
+            </div>
+        </div>
+
+        <!-- フッター -->
+        <footer class="footer-notice">
+            <p>※ Google MapsのUI変更により動作しなくなる可能性があります。過度な使用はIPブロックの原因になります。個人利用のみ。</p>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

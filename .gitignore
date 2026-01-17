@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Output files
+output*.csv
+*.log
+
+# Portable version (generated)
+ポータブル版/
+GoogleMapExporter_ポータブル版/
+GoogleMapExporter_ポータブル版.zip
+
+# Claude Code
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+nul
+
+# Development notes and specs
+仕様/
+Develop Google Maps Exporter.md
