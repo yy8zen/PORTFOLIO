@@ -75,6 +75,12 @@
                         <label for="maxItems">取得件数</label>
                         <input type="number" id="maxItems" name="maxItems" min="0" step="10" placeholder="無制限">
                     </div>
+                    <!-- 隠しデバッグオプション（Ctrl+Shift+Dで表示） -->
+                    <div id="debugOption" class="form-group" style="display: none;">
+                        <label class="day-cb" style="background: #ff6b6b; color: white;">
+                            <input type="checkbox" id="debugMode" name="debugMode"> DEV
+                        </label>
+                    </div>
                     <div class="search-actions">
                         <button type="submit" id="startButton" class="btn btn-primary">検索開始</button>
                     </div>

@@ -1,6 +1,22 @@
 // Socket.IO接続
 const socket = io();
 
+// 隠しデバッグモード（Ctrl+Shift+D で表示切替）
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        const debugOption = document.getElementById('debugOption');
+        if (debugOption.style.display === 'none') {
+            debugOption.style.display = 'block';
+            console.log('Debug mode enabled');
+        } else {
+            debugOption.style.display = 'none';
+            document.getElementById('debugMode').checked = false;
+            console.log('Debug mode disabled');
+        }
+    }
+});
+
 // DOM要素
 const form = document.getElementById('scrapeForm');
 
@@ -35,12 +51,15 @@ form.addEventListener('submit', async (e) => {
 
     // フォームデータの取得（キーワードに場所も含める）
     const keyword = document.getElementById('keyword').value.trim();
+    // デバッグモードのチェック（チェックされていたらブラウザ表示）
+    const isDebugMode = document.getElementById('debugMode').checked;
+
     const formData = {
         address: '',  // キーワードに含まれる
         keyword: keyword,
         rating: parseFloat(document.getElementById('rating').value) || 0,
         reviewCount: parseInt(document.getElementById('reviewCount').value) || 0,
-        headless: true,  // 常にバックグラウンド実行
+        headless: !isDebugMode,  // デバッグモードならブラウザ表示
         // 絞り込み条件
         addressFilter: document.getElementById('addressFilter').value.trim(),
         categoryFilter: document.getElementById('categoryFilter').value.trim(),
@@ -264,6 +283,7 @@ newSearchButton.addEventListener('click', () => {
     document.querySelectorAll('input[name="dayFilter"]').forEach(cb => cb.checked = false);
     document.getElementById('hoursFilter').value = '';
     document.getElementById('maxItems').value = '';
+    // デバッグモードはリセットしない（開発者は継続して使用するため）
 
     // UIをリセット
     progressSection.style.display = 'none';
