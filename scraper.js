@@ -111,7 +111,7 @@ class GoogleMapScraper {
         }
     }
 
-    async search(address, keyword, minRating = 0, maxRating = null, minReviews = 0, maxReviews = null, filters = {}) {
+    async search(address, keyword, ratingValue = null, ratingOp = 'gte', reviewCountValue = null, reviewCountOp = 'gte', filters = {}) {
         try {
             // Google Mapsへのナビゲーション（リトライ付き）
             this.reportProgress('opening', { message: 'Google Mapsを開いています...' });
@@ -213,28 +213,28 @@ class GoogleMapScraper {
                 const r = parseFloat(c.rating) || 0;
                 const rev = parseInt(c.reviews) || 0;
 
-                // 評価フィルター（下限）
-                if (minRating > 0 && r < minRating) {
-                    preFilteredOut.rating++;
-                    continue;
+                // 評価フィルター
+                if (ratingValue !== null) {
+                    if (ratingOp === 'gte' && r < ratingValue) {
+                        preFilteredOut.rating++;
+                        continue;
+                    }
+                    if (ratingOp === 'lte' && r > ratingValue) {
+                        preFilteredOut.rating++;
+                        continue;
+                    }
                 }
 
-                // 評価フィルター（上限）
-                if (maxRating !== null && r > maxRating) {
-                    preFilteredOut.rating++;
-                    continue;
-                }
-
-                // レビュー数フィルター（下限、リストで取得できた場合のみ）
-                if (minReviews > 0 && rev > 0 && rev < minReviews) {
-                    preFilteredOut.reviews++;
-                    continue;
-                }
-
-                // レビュー数フィルター（上限、リストで取得できた場合のみ）
-                if (maxReviews !== null && rev > 0 && rev > maxReviews) {
-                    preFilteredOut.reviews++;
-                    continue;
+                // レビュー数フィルター（リストで取得できた場合のみ）
+                if (reviewCountValue !== null && rev > 0) {
+                    if (reviewCountOp === 'gte' && rev < reviewCountValue) {
+                        preFilteredOut.reviews++;
+                        continue;
+                    }
+                    if (reviewCountOp === 'lte' && rev > reviewCountValue) {
+                        preFilteredOut.reviews++;
+                        continue;
+                    }
                 }
 
                 // カテゴリフィルター（カテゴリ or リストテキストから検索）
@@ -282,16 +282,12 @@ class GoogleMapScraper {
                 original: candidates.length
             });
             if (preFilteredOut.rating > 0) {
-                const ratingConditions = [];
-                if (minRating > 0) ratingConditions.push(`${minRating}未満`);
-                if (maxRating !== null) ratingConditions.push(`${maxRating}超`);
-                console.log(`  - 評価で除外: ${preFilteredOut.rating}件 (${ratingConditions.join('または')})`);
+                const opText = ratingOp === 'gte' ? '未満' : '超';
+                console.log(`  - 評価で除外: ${preFilteredOut.rating}件 (${ratingValue}${opText})`);
             }
             if (preFilteredOut.reviews > 0) {
-                const reviewConditions = [];
-                if (minReviews > 0) reviewConditions.push(`${minReviews}件未満`);
-                if (maxReviews !== null) reviewConditions.push(`${maxReviews}件超`);
-                console.log(`  - レビュー数で除外: ${preFilteredOut.reviews}件 (${reviewConditions.join('または')})`);
+                const opText = reviewCountOp === 'gte' ? '件未満' : '件超';
+                console.log(`  - レビュー数で除外: ${preFilteredOut.reviews}件 (${reviewCountValue}${opText})`);
             }
             if (preFilteredOut.category > 0) {
                 console.log(`  - カテゴリで除外: ${preFilteredOut.category}件 (${filters.category}を含まない)`);
@@ -299,7 +295,7 @@ class GoogleMapScraper {
             if (preFilteredOut.budget > 0) {
                 console.log(`  - 予算で除外: ${preFilteredOut.budget}件 (範囲外)`);
             }
-            if (minReviews > 0) {
+            if (reviewCountValue !== null && reviewCountOp === 'gte') {
                 const unknownReviews = targets.filter(t => !t.reviews || t.reviews === 0).length;
                 if (unknownReviews > 0) {
                     console.log(`  - レビュー数不明: ${unknownReviews}件 (詳細取得後に確認)`);

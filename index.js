@@ -5,10 +5,10 @@ const { CsvExporter } = require('./csvExporter');
 program
     .requiredOption('-a, --address <string>', 'Searching center address')
     .requiredOption('-k, --keyword <string>', 'Search keyword (category)')
-    .option('-r, --rating <number>', 'Minimum rating', parseFloat, 0)
-    .option('--rating-max <number>', 'Maximum rating', parseFloat)
-    .option('-c, --count <number>', 'Minimum review count', parseInt, 0)
-    .option('--count-max <number>', 'Maximum review count', parseInt)
+    .option('-r, --rating <number>', 'Rating filter value', parseFloat)
+    .option('--rating-op <op>', 'Rating filter operator: gte (>=) or lte (<=)', 'gte')
+    .option('-c, --count <number>', 'Review count filter value', parseInt)
+    .option('--count-op <op>', 'Review count filter operator: gte (>=) or lte (<=)', 'gte')
     .option('-o, --output <string>', 'Output CSV filename', 'output.csv')
     .option('--headless', 'Run in headless mode', false)
     .parse(process.argv);
@@ -19,11 +19,13 @@ const options = program.opts();
     console.log('='.repeat(60));
     console.log('Google Map Exporter を起動しています...');
     console.log('='.repeat(60));
+    const ratingOpText = options.ratingOp === 'lte' ? '以下' : '以上';
+    const countOpText = options.countOp === 'lte' ? '以下' : '以上';
     console.log(`検索条件:`);
     console.log(`  住所: ${options.address}`);
     console.log(`  キーワード: ${options.keyword}`);
-    console.log(`  評価: ${options.rating}以上${options.ratingMax ? ` ～ ${options.ratingMax}以下` : ''}`);
-    console.log(`  レビュー数: ${options.count}件以上${options.countMax ? ` ～ ${options.countMax}件以下` : ''}`);
+    console.log(`  評価: ${options.rating !== undefined ? `${options.rating}${ratingOpText}` : '指定なし'}`);
+    console.log(`  レビュー数: ${options.count !== undefined ? `${options.count}件${countOpText}` : '指定なし'}`);
     console.log(`  出力ファイル: ${options.output}`);
     console.log(`  ヘッドレスモード: ${options.headless ? '有効' : '無効'}`);
     console.log('='.repeat(60));
@@ -41,10 +43,10 @@ const options = program.opts();
         results = await scraper.search(
             options.address,
             options.keyword,
-            options.rating,
-            options.ratingMax || null,
-            options.count,
-            options.countMax || null
+            options.rating !== undefined ? options.rating : null,
+            options.ratingOp || 'gte',
+            options.count !== undefined ? options.count : null,
+            options.countOp || 'gte'
         );
 
         console.log('\n' + '='.repeat(60));

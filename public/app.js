@@ -57,10 +57,10 @@ form.addEventListener('submit', async (e) => {
     const formData = {
         address: '',  // キーワードに含まれる
         keyword: keyword,
-        ratingMin: parseFloat(document.getElementById('ratingMin').value) || 0,
-        ratingMax: parseFloat(document.getElementById('ratingMax').value) || null,
-        reviewCountMin: parseInt(document.getElementById('reviewCountMin').value) || 0,
-        reviewCountMax: parseInt(document.getElementById('reviewCountMax').value) || null,
+        rating: parseFloat(document.getElementById('rating').value) || null,
+        ratingOp: document.querySelector('input[name="ratingOp"]:checked').value,  // 'gte' or 'lte'
+        reviewCount: parseInt(document.getElementById('reviewCount').value) || null,
+        reviewCountOp: document.querySelector('input[name="reviewCountOp"]:checked').value,  // 'gte' or 'lte'
         headless: !isDebugMode,  // デバッグモードならブラウザ表示
         // 絞り込み条件
         addressFilter: document.getElementById('addressFilter').value.trim(),
@@ -274,10 +274,10 @@ newSearchButton.addEventListener('click', () => {
     // フォームをリセット
     form.reset();
     document.getElementById('keyword').value = '';
-    document.getElementById('ratingMin').value = '';
-    document.getElementById('ratingMax').value = '';
-    document.getElementById('reviewCountMin').value = '';
-    document.getElementById('reviewCountMax').value = '';
+    document.getElementById('rating').value = '';
+    document.querySelector('input[name="ratingOp"][value="gte"]').checked = true;
+    document.getElementById('reviewCount').value = '';
+    document.querySelector('input[name="reviewCountOp"][value="gte"]').checked = true;
     // 詳細フィルターもリセット
     document.getElementById('addressFilter').value = '';
     document.getElementById('categoryFilter').value = '';

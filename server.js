@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 // スクレイピング実行エンドポイント
 app.post('/api/scrape', async (req, res) => {
     const {
-        address, prefecture, city, keyword, ratingMin, ratingMax, reviewCountMin, reviewCountMax, headless,
+        address, prefecture, city, keyword, rating, ratingOp, reviewCount, reviewCountOp, headless,
         addressFilter, categoryFilter, budgetMin, budgetMax, dayFilter, hoursFilter, maxItems
     } = req.body;
 
@@ -117,10 +117,10 @@ app.post('/api/scrape', async (req, res) => {
                 const results = await scraper.search(
                     address,
                     keyword,
-                    parseFloat(ratingMin) || 0,
-                    parseFloat(ratingMax) || null,
-                    parseInt(reviewCountMin) || 0,
-                    parseInt(reviewCountMax) || null,
+                    parseFloat(rating) || null,
+                    ratingOp || 'gte',
+                    parseInt(reviewCount) || null,
+                    reviewCountOp || 'gte',
                     filters
                 );
 
