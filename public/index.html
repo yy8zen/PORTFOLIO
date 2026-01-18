@@ -27,12 +27,20 @@
                 <div class="filter-row">
                     <span class="filter-label">絞り込み:</span>
                     <div class="form-group">
-                        <label for="rating">評価</label>
-                        <input type="number" id="rating" name="rating" min="0" max="5" step="0.1" value="0">
+                        <label for="ratingMin">評価下限</label>
+                        <input type="number" id="ratingMin" name="ratingMin" min="0" max="5" step="0.1" placeholder="以上">
                     </div>
                     <div class="form-group">
-                        <label for="reviewCount">レビュー数</label>
-                        <input type="number" id="reviewCount" name="reviewCount" min="0" step="1" value="0">
+                        <label for="ratingMax">評価上限</label>
+                        <input type="number" id="ratingMax" name="ratingMax" min="0" max="5" step="0.1" placeholder="以下">
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewCountMin">レビュー下限</label>
+                        <input type="number" id="reviewCountMin" name="reviewCountMin" min="0" step="1" placeholder="以上">
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewCountMax">レビュー上限</label>
+                        <input type="number" id="reviewCountMax" name="reviewCountMax" min="0" step="1" placeholder="以下">
                     </div>
                     <div class="form-group">
                         <label for="budgetMin">予算下限</label>

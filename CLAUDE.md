@@ -136,10 +136,20 @@ Chromium is automatically installed via Playwright during npm install.
   - Category button selector (`button[jsaction*="category"]`)
   - Feed scrolling and list item structure
 
+**Auto-Scroll Behavior**:
+- Scrolls until "リストの最後に到達しました" (end of list) is detected
+- Uses network idle detection: waits for 2 seconds of no network requests after each scroll
+- Additional 5-second wait after network idle before next scroll
+- Maximum 100 scroll attempts as a safety limit
+- Early termination if item count doesn't change for 2 consecutive attempts
+
 **Performance Considerations**:
-- Auto-scroll loop runs 5 iterations with 2-second delays (configurable in `autoScroll()`)
 - 500ms delay between detail page visits to avoid rate limiting
 - Headless mode runs faster but non-headless is better for debugging
+
+**Hidden Debug Mode (Web UI)**:
+- Press `Ctrl+Shift+D` to toggle debug mode
+- Shows a "DEV" checkbox that enables browser window display during scraping
 
 ## Common Issues
 

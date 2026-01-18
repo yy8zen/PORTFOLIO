@@ -111,7 +111,7 @@ class GoogleMapScraper {
         }
     }
 
-    async search(address, keyword, minRating = 0, minReviews = 0, filters = {}) {
+    async search(address, keyword, minRating = 0, maxRating = null, minReviews = 0, maxReviews = null, filters = {}) {
         try {
             // Google Mapsへのナビゲーション（リトライ付き）
             this.reportProgress('opening', { message: 'Google Mapsを開いています...' });
@@ -213,14 +213,26 @@ class GoogleMapScraper {
                 const r = parseFloat(c.rating) || 0;
                 const rev = parseInt(c.reviews) || 0;
 
-                // 評価フィルター
+                // 評価フィルター（下限）
                 if (minRating > 0 && r < minRating) {
                     preFilteredOut.rating++;
                     continue;
                 }
 
-                // レビュー数フィルター（リストで取得できた場合のみ）
+                // 評価フィルター（上限）
+                if (maxRating !== null && r > maxRating) {
+                    preFilteredOut.rating++;
+                    continue;
+                }
+
+                // レビュー数フィルター（下限、リストで取得できた場合のみ）
                 if (minReviews > 0 && rev > 0 && rev < minReviews) {
+                    preFilteredOut.reviews++;
+                    continue;
+                }
+
+                // レビュー数フィルター（上限、リストで取得できた場合のみ）
+                if (maxReviews !== null && rev > 0 && rev > maxReviews) {
                     preFilteredOut.reviews++;
                     continue;
                 }
@@ -270,10 +282,16 @@ class GoogleMapScraper {
                 original: candidates.length
             });
             if (preFilteredOut.rating > 0) {
-                console.log(`  - 評価で除外: ${preFilteredOut.rating}件 (${minRating}未満)`);
+                const ratingConditions = [];
+                if (minRating > 0) ratingConditions.push(`${minRating}未満`);
+                if (maxRating !== null) ratingConditions.push(`${maxRating}超`);
+                console.log(`  - 評価で除外: ${preFilteredOut.rating}件 (${ratingConditions.join('または')})`);
             }
             if (preFilteredOut.reviews > 0) {
-                console.log(`  - レビュー数で除外: ${preFilteredOut.reviews}件 (${minReviews}件未満)`);
+                const reviewConditions = [];
+                if (minReviews > 0) reviewConditions.push(`${minReviews}件未満`);
+                if (maxReviews !== null) reviewConditions.push(`${maxReviews}件超`);
+                console.log(`  - レビュー数で除外: ${preFilteredOut.reviews}件 (${reviewConditions.join('または')})`);
             }
             if (preFilteredOut.category > 0) {
                 console.log(`  - カテゴリで除外: ${preFilteredOut.category}件 (${filters.category}を含まない)`);
@@ -622,6 +640,52 @@ class GoogleMapScraper {
         return { passed: true, reason: '' };
     }
 
+    async waitForNetworkIdle(idleTime = 2000, timeout = 15000) {
+        return new Promise((resolve) => {
+            let lastRequestTime = Date.now();
+            let pendingRequests = 0;
+            let checkInterval;
+            let timeoutTimer;
+
+            const onRequest = () => {
+                pendingRequests++;
+                lastRequestTime = Date.now();
+            };
+
+            const onResponse = () => {
+                pendingRequests = Math.max(0, pendingRequests - 1);
+                lastRequestTime = Date.now();
+            };
+
+            const cleanup = () => {
+                this.page.off('request', onRequest);
+                this.page.off('response', onResponse);
+                this.page.off('requestfailed', onResponse);
+                clearInterval(checkInterval);
+                clearTimeout(timeoutTimer);
+            };
+
+            this.page.on('request', onRequest);
+            this.page.on('response', onResponse);
+            this.page.on('requestfailed', onResponse);
+
+            checkInterval = setInterval(() => {
+                const idleDuration = Date.now() - lastRequestTime;
+                if (pendingRequests === 0 && idleDuration >= idleTime) {
+                    console.log(`ネットワークアイドル検出（${idleDuration}ms）`);
+                    cleanup();
+                    resolve();
+                }
+            }, 200);
+
+            timeoutTimer = setTimeout(() => {
+                console.log('ネットワーク待機タイムアウト');
+                cleanup();
+                resolve();
+            }, timeout);
+        });
+    }
+
     async autoScroll(feedLocator, maxItems = 0) {
         const targetText = maxItems > 0 ? `最大${maxItems}件` : '最後まで';
         console.log(`リストをスクロール中（${targetText}）...`);
@@ -653,7 +717,10 @@ class GoogleMapScraper {
                     // スクロール実行
                     await feedLocator.evaluate(el => el.scrollBy(0, 3000));
 
-                    // コンテンツ読み込みを待機（5秒）
+                    // ネットワークがアイドルになるまで待機（2秒間リクエストがなければアイドル）
+                    await this.waitForNetworkIdle(2000, 15000);
+
+                    // ネットワークアイドル後、次のスクロールまで待機（5秒）
                     await this.page.waitForTimeout(5000);
 
                     // リスト終端のテキストをチェック

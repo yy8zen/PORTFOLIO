@@ -3,7 +3,7 @@ const socket = io();
 
 // 隠しデバッグモード（Ctrl+Shift+D で表示切替）
 document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+    if (e.ctrlKey && e.shiftKey && e.code === 'KeyD') {
         e.preventDefault();
         const debugOption = document.getElementById('debugOption');
         if (debugOption.style.display === 'none') {
@@ -57,8 +57,10 @@ form.addEventListener('submit', async (e) => {
     const formData = {
         address: '',  // キーワードに含まれる
         keyword: keyword,
-        rating: parseFloat(document.getElementById('rating').value) || 0,
-        reviewCount: parseInt(document.getElementById('reviewCount').value) || 0,
+        ratingMin: parseFloat(document.getElementById('ratingMin').value) || 0,
+        ratingMax: parseFloat(document.getElementById('ratingMax').value) || null,
+        reviewCountMin: parseInt(document.getElementById('reviewCountMin').value) || 0,
+        reviewCountMax: parseInt(document.getElementById('reviewCountMax').value) || null,
         headless: !isDebugMode,  // デバッグモードならブラウザ表示
         // 絞り込み条件
         addressFilter: document.getElementById('addressFilter').value.trim(),
@@ -272,8 +274,10 @@ newSearchButton.addEventListener('click', () => {
     // フォームをリセット
     form.reset();
     document.getElementById('keyword').value = '';
-    document.getElementById('rating').value = '0';
-    document.getElementById('reviewCount').value = '0';
+    document.getElementById('ratingMin').value = '';
+    document.getElementById('ratingMax').value = '';
+    document.getElementById('reviewCountMin').value = '';
+    document.getElementById('reviewCountMax').value = '';
     // 詳細フィルターもリセット
     document.getElementById('addressFilter').value = '';
     document.getElementById('categoryFilter').value = '';
