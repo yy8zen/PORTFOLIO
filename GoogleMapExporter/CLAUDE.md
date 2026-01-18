@@ -18,14 +18,16 @@ This starts a web server at http://localhost:3000 and automatically opens the br
 
 ### CLI Version
 ```bash
-node index.js --address "新宿駅" --keyword "ラーメン" --rating 4.0 --count 100 --output results.csv --headless
+node index.js --address "新宿駅" --keyword "ラーメン" --rating 4.0 --rating-op gte --count 100 --count-op gte --output results.csv --headless
 ```
 
 ### Command Line Options
 - `-a, --address <string>` (required): Center point address for search
 - `-k, --keyword <string>` (required): Search keyword/category (e.g., "レストラン", "居酒屋", "ホテル")
-- `-r, --rating <number>`: Minimum rating filter (default: 0)
-- `-c, --count <number>`: Minimum review count filter (default: 0)
+- `-r, --rating <number>`: Rating filter value
+- `--rating-op <op>`: Rating filter operator: `gte` (>=, 以上) or `lte` (<=, 以下). Default: `gte`
+- `-c, --count <number>`: Review count filter value
+- `--count-op <op>`: Review count filter operator: `gte` (>=) or `lte` (<=). Default: `gte`
 - `-o, --output <string>`: Output CSV filename (default: "output.csv")
 - `--headless`: Run browser in headless mode (default: false, shows browser window)
 
@@ -55,14 +57,12 @@ Chromium is automatically installed via Playwright during npm install.
    - Configured with Japanese locale (`ja-JP`)
    - Search flow:
      1. Navigate to Google Maps (Japanese version)
-     2. Search for the specified address
-     3. Click "付近を検索" (Nearby) button OR fallback to combined address+keyword search
-     4. Enter keyword to search nearby places
-     5. Auto-scroll the feed to load more results
-     6. Extract basic info (name, rating, reviews, category, budget, URL) from list items
-     7. **Pre-filter** by rating, review count, category, and budget
-     8. Visit each qualifying place's detail page to extract address, business hours, and reviews
-     9. **Post-filter** by address, business days, and business hours
+     2. Search for "[address] [keyword]" combined query
+     3. Auto-scroll the feed to load more results (with network idle detection)
+     4. Extract basic info (name, rating, reviews, category, budget, URL) from list items
+     5. **Pre-filter** by rating, review count, category, and budget
+     6. Visit each qualifying place's detail page to extract address, business hours, and reviews
+     7. **Post-filter** by rating (re-check), review count (re-check), address, business days, and business hours
 
 4. **csvExporter.js** - CSV output handler
    - `CsvExporter` class wraps `csv-writer` library
@@ -86,11 +86,18 @@ Chromium is automatically installed via Playwright during npm install.
 
 **Two-Phase Filtering**:
 - **Pre-filtering** (fast, at list extraction stage):
-  - Rating, review count, category, budget
+  - Rating (gte/lte), review count (gte/lte), category, budget
   - Applied before visiting detail pages, saves time
-- **Post-filtering** (after detail fetch):
+- **Post-filtering** (after detail fetch, in `checkFilters()`):
+  - Rating (re-check with detail page data)
+  - Review count (re-check with detail page data)
   - Address (contains), business days, business hours
-  - Requires data from detail page
+  - Re-checking rating/reviews is important because list extraction may fail to get accurate values
+
+**Rating/Review Filter Operators**:
+- Both rating and review count support `gte` (>=, 以上) and `lte` (<=, 以下) operators
+- Example: `rating=3, ratingOp=lte` means "3 or less" (評価3以下)
+- Example: `reviewCount=100, reviewCountOp=gte` means "100 or more reviews" (100件以上)
 
 **Business Hours Filtering**:
 - Supports midnight-spanning times (e.g., 18:00～5:00)
@@ -100,7 +107,7 @@ Chromium is automatically installed via Playwright during npm install.
 - The scraper uses Playwright's locator API with role-based selectors where possible
 - Main extraction happens in two phases:
   1. `extractBasicList()`: Parse the search results feed using `a[href*="/maps/place/"]` links, extract name, rating, reviews, category, budget, review text
-  2. `getDetails()`: Navigate to individual place URLs to scrape address, business hours
+  2. `getDetailsWithPage()`: Navigate to individual place URLs to scrape address, business hours (parallel processing with multiple tabs)
 - Scrolling uses `evaluate()` to scroll the feed element directly
 - Deduplication by URL to avoid duplicate entries
 - Store name extracted from aria-label attribute for accuracy
@@ -110,8 +117,8 @@ Chromium is automatically installed via Playwright during npm install.
 - Configurable retry settings in `GoogleMapScraper`:
   - `maxRetries`: 3 attempts by default
   - `retryDelay`: 2000ms base delay (multiplied by attempt number)
-  - `navigationTimeout`: 30 seconds for page navigation
-  - `elementTimeout`: 10 seconds for element waiting
+  - `navigationTimeout`: 60 seconds for page navigation
+  - `elementTimeout`: 20 seconds for element waiting
 - Retry wrapper (`retryOperation()`) handles:
   - Google Maps navigation
   - Address search operations
@@ -142,9 +149,11 @@ Chromium is automatically installed via Playwright during npm install.
 - Additional 5-second wait after network idle before next scroll
 - Maximum 100 scroll attempts as a safety limit
 - Early termination if item count doesn't change for 2 consecutive attempts
+- Supports `maxItems` parameter to limit the number of items to fetch
 
 **Performance Considerations**:
-- 500ms delay between detail page visits to avoid rate limiting
+- Parallel detail page processing using multiple browser tabs (up to 5 tabs)
+- 300ms delay between batch processing to avoid rate limiting
 - Headless mode runs faster but non-headless is better for debugging
 
 **Hidden Debug Mode (Web UI)**:
@@ -180,6 +189,6 @@ This is expected behavior - the scraper saves what it can extract
 ## Development Notes
 
 - No test suite currently - verification is manual
-- Dependencies: `playwright`, `csv-writer`, `commander`
+- Dependencies: `playwright`, `csv-writer`, `commander`, `express`, `socket.io`
 - The `仕様/` directory contains Japanese specification and planning documents
 - Browser automation uses Chromium (installed via Playwright)

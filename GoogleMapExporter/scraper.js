@@ -356,7 +356,7 @@ class GoogleMapScraper {
                         delete mergedResult.detailReviews;
                         delete mergedResult.listText;
 
-                        const filterResult = this.checkFilters(mergedResult, minReviews, filters);
+                        const filterResult = this.checkFilters(mergedResult, ratingValue, ratingOp, reviewCountValue, reviewCountOp, filters);
                         results.push({
                             result: mergedResult,
                             passed: filterResult.passed,
@@ -455,16 +455,33 @@ class GoogleMapScraper {
     /**
      * 単一アイテムに対してすべてのフィルターをチェック
      * @param {Object} item 検索結果アイテム
-     * @param {number} minReviews 最小レビュー数
+     * @param {number} ratingValue 評価フィルター値
+     * @param {string} ratingOp 評価フィルター演算子 ('gte' or 'lte')
+     * @param {number} reviewCountValue レビュー数フィルター値
+     * @param {string} reviewCountOp レビュー数フィルター演算子 ('gte' or 'lte')
      * @param {Object} filters 詳細フィルター設定
      * @returns {{passed: boolean, reason: string}} チェック結果
      */
-    checkFilters(item, minReviews, filters) {
+    checkFilters(item, ratingValue, ratingOp, reviewCountValue, reviewCountOp, filters) {
+        // 評価チェック（詳細ページから取得した評価を再チェック）
+        if (ratingValue !== null) {
+            const r = parseFloat(item.rating) || 0;
+            if (ratingOp === 'gte' && r < ratingValue) {
+                return { passed: false, reason: `評価不足 (${r} < ${ratingValue})` };
+            }
+            if (ratingOp === 'lte' && r > ratingValue) {
+                return { passed: false, reason: `評価超過 (${r} > ${ratingValue})` };
+            }
+        }
+
         // レビュー数チェック
-        if (minReviews > 0) {
+        if (reviewCountValue !== null && reviewCountValue > 0) {
             const rev = parseInt(item.reviews) || 0;
-            if (rev < minReviews) {
-                return { passed: false, reason: `レビュー数不足 (${rev}件 < ${minReviews}件)` };
+            if (reviewCountOp === 'gte' && rev < reviewCountValue) {
+                return { passed: false, reason: `レビュー数不足 (${rev}件 < ${reviewCountValue}件)` };
+            }
+            if (reviewCountOp === 'lte' && rev > reviewCountValue) {
+                return { passed: false, reason: `レビュー数超過 (${rev}件 > ${reviewCountValue}件)` };
             }
         }
 
