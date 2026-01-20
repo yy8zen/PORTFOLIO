@@ -88,6 +88,7 @@ if errorlevel 1 (
 )
 
 echo [6/6] Chromium をインストール中...
+set "PLAYWRIGHT_BROWSERS_PATH=%PORTABLE_DIR%\playwright-browsers"
 call "%NODE_DIR%\npx.cmd" playwright install chromium
 if errorlevel 1 (
     echo [エラー] Chromium のインストールに失敗しました。
@@ -107,6 +108,9 @@ echo     echo [エラー] Node.js が見つかりません。 >> "%PORTABLE_DIR%
 echo     pause >> "%PORTABLE_DIR%\起動.bat"
 echo     exit /b 1 >> "%PORTABLE_DIR%\起動.bat"
 echo ) >> "%PORTABLE_DIR%\起動.bat"
+echo. >> "%PORTABLE_DIR%\起動.bat"
+echo REM Playwrightのブラウザをポータブルディレクトリに配置 >> "%PORTABLE_DIR%\起動.bat"
+echo set "PLAYWRIGHT_BROWSERS_PATH=%%WORK_DIR%%playwright-browsers" >> "%PORTABLE_DIR%\起動.bat"
 echo. >> "%PORTABLE_DIR%\起動.bat"
 echo set "PATH=%%NODE_DIR%%;%%NODE_DIR%%\node_modules\.bin;%%PATH%%" >> "%PORTABLE_DIR%\起動.bat"
 echo. >> "%PORTABLE_DIR%\起動.bat"
